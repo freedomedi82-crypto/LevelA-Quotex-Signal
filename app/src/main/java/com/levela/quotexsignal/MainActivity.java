@@ -11,11 +11,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(32, 32, 32, 32);
+        root.setPadding(32, 48, 32, 32);
 
         TextView title = new TextView(this);
         title.setText("LEVEL A SIGNAL");
@@ -24,13 +22,21 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER);
 
         TextView status = new TextView(this);
-        status.setText("Android engine initialized\nSignal research mode");
-        status.setTextSize(18);
+        status.setText("Research engine initialized\n\nV15 Vision: READY\nV29 Market Integrity: READY\n\nMode: ANALYSIS / RESEARCH ONLY\nNo automatic order execution");
+        status.setTextSize(17);
         status.setGravity(Gravity.CENTER);
-        status.setPadding(0, 24, 0, 0);
+        status.setPadding(0, 28, 0, 0);
 
-        root.addView(title);
-        root.addView(status);
+        TextView note = new TextView(this);
+        note.setText("Data must be validated before calibration. Signals are analytical outputs and do not guarantee trading results.");
+        note.setTextSize(14);
+        note.setTextColor(Color.DKGRAY);
+        note.setGravity(Gravity.CENTER);
+        note.setPadding(0, 36, 0, 0);
+
+        root.addView(title, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(status, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(note, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
     }
 }
