@@ -39,8 +39,6 @@ jobs:
           grep -q 'versionName = "0.2.0"' app/build.gradle.kts
           echo "Application identity and release version checks passed."
 
-      # Always produce a testable APK from the latest main commit.
-      # This path does not replace the stable release-signing path.
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
 
@@ -50,8 +48,6 @@ jobs:
           name: level-a-debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
-      # Stable release signing is attempted only when the four repository
-      # secrets are present. Missing secrets must not block debug validation.
       - name: Check release signing configuration
         id: release_config
         env:
@@ -72,9 +68,23 @@ jobs:
           printf '%s' "$LEVELA_KEYSTORE_BASE64" | base64 --decode > "$LEVELA_KEYSTORE_PATH"
           test -s "$LEVELA_KEYSTORE_PATH"
 
+      - name: Verify release certificate fingerprint
+        if: steps.release_config.outputs.configured == 'true'
+        run: |
+          echo "Release signing certificate SHA-256 fingerprint:"
+          keytool -list -v -keystore "$LEVELA_KEYSTORE_PATH" -storepass "$LEVELA_KEYSTORE_PASSWORD" -alias "$LEVELA_KEY_ALIAS" | grep -E '^\s*SHA256:'
+
       - name: Build signed release APK
         if: steps.release_config.outputs.configured == 'true'
         run: gradle assembleRelease --stacktrace
+
+      - name: Verify release APK certificate fingerprint
+        if: steps.release_config.outputs.configured == 'true'
+        run: |
+          APK=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)
+          test -n "$APK"
+          echo "Signed release APK certificate SHA-256 fingerprint:"
+          $ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)/apksigner verify --print-certs "$APK" | grep -E 'Signer #1 certificate SHA-256 digest:'
 
       - name: Upload release APK
         if: steps.release_config.outputs.configured == 'true'
