@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
     private void validateCaptured() {
         ReplayCsvLoader.Result parsed = ReplayCsvLoader.INSTANCE.parse(capture.csvText());
         LevelAIntegrityReport r = LevelAResearchEngine.INSTANCE.evaluate(parsed.getPoints(), 60);
-        MarketIntegrityReport m = MarketIntegrityEngine.INSTANCE.evaluate(parsed.getPoints());
+        MarketIntegrityReport m = MarketIntegrityEngine.INSTANCE.evaluate(parsed.getPoints(), 30000L);
         report.setText(formatReport("CAPTURE", r, m, parsed.getErrors()));
     }
 
@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
             points.add(new ReplayPoint(t + i * 5000L, price));
         }
         LevelAIntegrityReport r = LevelAResearchEngine.INSTANCE.evaluate(points, 60);
-        MarketIntegrityReport m = MarketIntegrityEngine.INSTANCE.evaluate(points);
+        MarketIntegrityReport m = MarketIntegrityEngine.INSTANCE.evaluate(points, 30000L);
         report.setText(formatReport("SAMPLE", r, m, new ArrayList<String>()));
     }
 
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
         List<ReplayPoint> points = new ArrayList<>();
         long t = System.currentTimeMillis() - 45000L;
         for (int i = 0; i < 10; i++) points.add(new ReplayPoint(t + i * 5000L, 100.0 + i * 0.01));
-        MarketIntegrityReport m = MarketIntegrityEngine.INSTANCE.evaluate(points);
+        MarketIntegrityReport m = MarketIntegrityEngine.INSTANCE.evaluate(points, 30000L);
         report.setText("MARKET INTEGRITY TEST\n\n"
                 + "Verdict: " + m.getVerdict() + "\n"
                 + "Points: " + m.getPoints() + "\n"
