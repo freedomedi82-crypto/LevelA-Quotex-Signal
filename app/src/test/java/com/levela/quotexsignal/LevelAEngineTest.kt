@@ -17,7 +17,7 @@ class LevelAEngineTest {
 
     @Test
     fun marketIntegrityPassesCleanReplay() {
-        val report = MarketIntegrityEngine.evaluate(points(10))
+        val report = MarketIntegrityEngine.evaluate(points(10), 30000L)
         assertEquals("PASS", report.verdict)
         assertEquals(10, report.validPoints)
     }
@@ -26,7 +26,7 @@ class LevelAEngineTest {
     fun marketIntegrityBlocksInvalidPrice() {
         val data = points(10).toMutableList()
         data[4] = ReplayPoint(data[4].timestamp, 0.0)
-        val report = MarketIntegrityEngine.evaluate(data)
+        val report = MarketIntegrityEngine.evaluate(data, 30000L)
         assertEquals("BLOCKED", report.verdict)
         assertEquals(1, report.invalidPrices)
     }
