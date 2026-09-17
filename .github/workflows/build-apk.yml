@@ -27,23 +27,50 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Restore release keystore
-        env:
-          LEVELA_KEYSTORE_BASE64: ${{ secrets.LEVELA_KEYSTORE_BASE64 }}
-        run: |
-          test -n "$LEVELA_KEYSTORE_BASE64" || (echo "Missing LEVELA_KEYSTORE_BASE64 repository secret" && exit 1)
-          printf '%s' "$LEVELA_KEYSTORE_BASE64" | base64 --decode > "$LEVELA_KEYSTORE_PATH"
-          test -s "$LEVELA_KEYSTORE_PATH"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.1'
 
+      # Always produce a testable APK from the latest main commit.
+      # This path does not replace the stable release-signing path.
+      - name: Build debug APK
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: level-a-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      # Stable release signing is attempted only when the four repository
+      # secrets are present. Missing secrets must not block debug validation.
+      - name: Check release signing configuration
+        id: release_config
+        env:
+          LEVELA_KEYSTORE_BASE64: ${{ secrets.LEVELA_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$LEVELA_KEYSTORE_BASE64" ] && [ -n "$LEVELA_KEYSTORE_PASSWORD" ] && [ -n "$LEVELA_KEY_ALIAS" ] && [ -n "$LEVELA_KEY_PASSWORD" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Stable release signing secrets are not configured yet; debug build remains available for validation."
+          fi
+
+      - name: Restore release keystore
+        if: steps.release_config.outputs.configured == 'true'
+        env:
+          LEVELA_KEYSTORE_BASE64: ${{ secrets.LEVELA_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$LEVELA_KEYSTORE_BASE64" | base64 --decode > "$LEVELA_KEYSTORE_PATH"
+          test -s "$LEVELA_KEYSTORE_PATH"
+
       - name: Build signed release APK
+        if: steps.release_config.outputs.configured == 'true'
         run: gradle assembleRelease --stacktrace
 
-      - name: Upload APK
+      - name: Upload release APK
+        if: steps.release_config.outputs.configured == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: level-a-release-apk
