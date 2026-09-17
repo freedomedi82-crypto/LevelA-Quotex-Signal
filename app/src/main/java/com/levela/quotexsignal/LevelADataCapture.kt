@@ -22,6 +22,6 @@ class LevelADataCapture(private val context: Context) {
     }
 
     fun csvText(): String = if (file.exists()) file.readText() else "timestamp,price\n"
-    fun pointCount(): Int = ReplayCsvLoader.parse(csvText()).getPoints().size
+    fun pointCount(): Int = ReplayCsvLoader.parse(csvText()).points.size
     fun filePath(): String = file.absolutePath
 }
