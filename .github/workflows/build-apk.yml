@@ -32,6 +32,13 @@ jobs:
         with:
           gradle-version: '9.7.1'
 
+      - name: Validate application identity and release version
+        run: |
+          grep -q 'applicationId = "com.levela.quotexsignal"' app/build.gradle.kts
+          grep -q 'versionCode = 2' app/build.gradle.kts
+          grep -q 'versionName = "0.2.0"' app/build.gradle.kts
+          echo "Application identity and release version checks passed."
+
       # Always produce a testable APK from the latest main commit.
       # This path does not replace the stable release-signing path.
       - name: Build debug APK
