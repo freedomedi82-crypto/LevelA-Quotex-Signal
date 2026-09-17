@@ -100,26 +100,26 @@ public class MainActivity extends Activity {
     }
 
     private void runSampleValidation() {
-        List<ReplayCsvLoader.Point> points = new ArrayList<>();
+        List<ReplayPoint> points = new ArrayList<>();
         long t = System.currentTimeMillis() - (119L * 5000L);
         double price = 100.0;
         for (int i = 0; i < 120; i++) {
             price += (i % 7 == 0 ? 0.08 : 0.02);
-            points.add(new ReplayCsvLoader.Point(t + i * 5000L, price));
+            points.add(new ReplayPoint(t + i * 5000L, price));
         }
         LevelAIntegrityReport r = LevelAResearchEngine.INSTANCE.evaluate(points, 60);
         report.setText(formatReport("SAMPLE", r, new ArrayList<String>()));
     }
 
     private void loadCsvData() {
-        report.setText("CSV REPLAY\n\nUse the repository's ReplayCsvLoader path for CSV data with columns timestamp,price.\n\nAfter loading data, run validation before calibration.");
+        report.setText("CSV REPLAY\n\nUse ReplayCsvLoader for CSV data with columns timestamp,price.\n\nAfter loading data, run validation before calibration.");
     }
 
     private String formatReport(String source, LevelAIntegrityReport r, List<String> errors) {
         return source + " VALIDATION\n\n"
                 + "Verdict: " + r.getVerdict() + "\n"
-                + "Points: " + r.getPointCount() + "\n"
-                + "Valid points: " + r.getValidPointCount() + "\n"
+                + "Points: " + r.getPoints() + "\n"
+                + "Valid points: " + r.getValidPoints() + "\n"
                 + "Duplicate timestamps: " + r.getDuplicateTimestamps() + "\n"
                 + "Invalid prices: " + r.getInvalidPrices() + "\n"
                 + "Non-monotonic timestamps: " + r.getNonMonotonicTimestamps() + "\n"
@@ -127,7 +127,8 @@ public class MainActivity extends Activity {
                 + "Interval CV: " + r.getIntervalCv() + "\n"
                 + "Coverage score: " + r.getCoverageScore() + "\n"
                 + "Suggested expiry: " + r.getSuggestedExpirySeconds() + " s\n\n"
-                + "Notes: " + r.getNotes() + "\n"
+                + "Note: " + r.getNote() + "\n"
+                + "Issues: " + r.getIssues() + "\n"
                 + "Parse warnings/errors: " + errors;
     }
 }
