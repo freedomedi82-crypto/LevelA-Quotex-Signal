@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -17,10 +18,13 @@ import java.util.List;
 public class MainActivity extends Activity {
     private static final int PICK_CSV = 1001;
     private TextView report;
+    private EditText priceInput;
+    private LevelADataCapture capture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        capture = new LevelADataCapture(this);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(32, 40, 32, 32);
@@ -49,6 +53,37 @@ public class MainActivity extends Activity {
         load.setOnClickListener(v -> pickCsv());
         root.addView(load, new LinearLayout.LayoutParams(-1, -2));
 
+        TextView captureLabel = new TextView(this);
+        captureLabel.setText("\nDATA CAPTURE (manual price input)");
+        captureLabel.setTextSize(16);
+        root.addView(captureLabel, new LinearLayout.LayoutParams(-1, -2));
+
+        priceInput = new EditText(this);
+        priceInput.setHint("Price");
+        priceInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        root.addView(priceInput, new LinearLayout.LayoutParams(-1, -2));
+
+        LinearLayout captureRow = new LinearLayout(this);
+        captureRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button start = new Button(this);
+        start.setText("START");
+        start.setOnClickListener(v -> { capture.start(true); report.setText("CAPTURE ACTIVE\n\nEnter a price and press CAPTURE PRICE.\nDataset: " + capture.pointCount() + " points"); });
+        captureRow.addView(start, new LinearLayout.LayoutParams(0, -2, 1));
+        Button add = new Button(this);
+        add.setText("CAPTURE PRICE");
+        add.setOnClickListener(v -> capturePrice());
+        captureRow.addView(add, new LinearLayout.LayoutParams(0, -2, 1));
+        Button stop = new Button(this);
+        stop.setText("STOP");
+        stop.setOnClickListener(v -> { capture.stop(); report.setText("CAPTURE STOPPED\n\nCaptured points: " + capture.pointCount() + "\nFile: " + capture.filePath()); });
+        captureRow.addView(stop, new LinearLayout.LayoutParams(0, -2, 1));
+        root.addView(captureRow, new LinearLayout.LayoutParams(-1, -2));
+
+        Button validateCapture = new Button(this);
+        validateCapture.setText("VALIDATE CAPTURED DATA");
+        validateCapture.setOnClickListener(v -> validateCaptured());
+        root.addView(validateCapture, new LinearLayout.LayoutParams(-1, -2));
+
         report = new TextView(this);
         report.setText("Status: READY\n\nCSV format: timestamp,price\nMinimum for calibration: 20 valid points\nRecommended: >=100 valid points with regular sampling.");
         report.setTextSize(15);
@@ -59,6 +94,22 @@ public class MainActivity extends Activity {
         scroll.addView(report);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
+    }
+
+    private void capturePrice() {
+        try {
+            double price = Double.parseDouble(priceInput.getText().toString().trim());
+            if (!capture.capture(price)) throw new IllegalStateException("Capture belum aktif atau harga tidak valid");
+            report.setText("CAPTURED\n\nPrice: " + price + "\nPoints: " + capture.pointCount() + "\n\nTekan VALIDATE CAPTURED DATA untuk menjalankan integrity gates.");
+        } catch (Exception e) {
+            report.setText("CAPTURE ERROR\n\n" + e.getMessage());
+        }
+    }
+
+    private void validateCaptured() {
+        ReplayCsvLoader.Result parsed = ReplayCsvLoader.INSTANCE.parse(capture.csvText());
+        LevelAIntegrityReport r = LevelAResearchEngine.INSTANCE.evaluate(parsed.getPoints(), 60);
+        report.setText(formatReport("CAPTURE", r, parsed.getErrors()));
     }
 
     private void pickCsv() {
