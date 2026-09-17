@@ -13,13 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity {
-    private final LevelADataCapture capture = new LevelADataCapture(this);
+    private LevelADataCapture capture;
     private EditText priceInput;
     private TextView report;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        capture = new LevelADataCapture(this);
         buildUi();
     }
 
